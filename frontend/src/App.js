@@ -4,16 +4,20 @@ import Board from './components/Board';
 import './App.css';
 
 function App() {
-  const [serverStatus, setServerStatus] = useState('Connecting to Python...');
-  
-  // THIS is the line that went missing! It holds the matrix.
+  const [serverStatus, setServerStatus] = useState('Connecting...');
   const [boardState, setBoardState] = useState([]); 
+  
+  // NEW: Keep track of who won! (0 = no one, 1 = Player, -1 = Computer)
+  const [winner, setWinner] = useState(0); 
 
-  useEffect(() => {
-    // Your exact Codespace URL with the start endpoint
-    const gameUrl = 'https://super-duper-giggle-wr449jvr65whg45r-5000.app.github.dev/api/game/start'; 
+  // Keep your actual Codespace URL!
+  const BASE_URL = 'https://super-duper-giggle-wr449jvr65whg45r-5000.app.github.dev/api/..';
 
-    fetch(gameUrl)
+  const startNewGame = () => {
+    setServerStatus('Starting new game...');
+    setWinner(0); // Reset the winner
+    
+    fetch(`${BASE_URL}/api/game/start`)
       .then(response => response.json())
       .then(data => {
         if (data.status === "game_started") {
@@ -21,21 +25,41 @@ function App() {
           setServerStatus("Game loaded successfully!");
         }
       })
-      .catch(error => {
-        console.error("Connection error:", error);
-        setServerStatus('Failed to fetch game data.');
-      });
+      .catch(error => setServerStatus('Failed to fetch game data.'));
+  };
+
+  // Start the game when the page first loads
+  useEffect(() => {
+    startNewGame();
   }, []);
 
   return (
     <div className="App" style={{ textAlign: 'center', padding: '20px' }}>
       <h1>RL Checkers</h1>
+      
+      {/* THE VICTORY BANNER */}
+      {winner === 1 && <h2 style={{ color: 'green' }}>🏆 YOU WIN! 🏆</h2>}
+      {winner === -1 && <h2 style={{ color: 'red' }}>💀 COMPUTER WINS! 💀</h2>}
+      
       <div style={{ marginBottom: '20px', color: '#555' }}>
         <strong>Status:</strong> {serverStatus}
       </div>
       
-      {/* Passing the state and the updater function to the Board */}
-      <Board boardData={boardState} setBoardState={setBoardState} /> 
+      {/* Only let them play if the game isn't over! */}
+      {winner === 0 ? (
+        <Board 
+          boardData={boardState} 
+          setBoardState={setBoardState} 
+          setWinner={setWinner} // Pass the setter so the Board can end the game
+        /> 
+      ) : (
+        <button 
+          onClick={startNewGame} 
+          style={{ padding: '15px 30px', fontSize: '20px', cursor: 'pointer' }}
+        >
+          Play Again
+        </button>
+      )}
     </div>
   );
 }

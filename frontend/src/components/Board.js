@@ -1,10 +1,10 @@
 // src/components/Board.js
-import React, { useState } from 'react'; // Added useState
+import React, { useState } from 'react';
 import Square from './Square';
 import Piece from './Piece';
-const Board = ({ boardData, setBoardState }) => {
 
-  // This state Remembers which square is currently clicked
+// 1. We added setWinner right here at the top!
+const Board = ({ boardData, setBoardState, setWinner }) => {
   const [selectedSquare, setSelectedSquare] = useState(null);
 
   const boardStyle = {
@@ -20,16 +20,13 @@ const Board = ({ boardData, setBoardState }) => {
     return <div>Loading board from Python...</div>;
   }
 
-  // This function runs every time you click a square
-  // This function runs every time you click ANY square
   const handleSquareClick = (row, col) => {
     const pieceValue = boardData[row][col];
 
     if (selectedSquare && pieceValue === 0) {
-      // KEEP YOUR CODESPACE URL, but use the /move endpoint!
+      // Keep your exact Codespace URL here
       const moveUrl = 'https://super-duper-giggle-wr449jvr65whg45r-5000.app.github.dev/api/game/move';
       
-      // Send the move to Python
       fetch(moveUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -40,9 +37,14 @@ const Board = ({ boardData, setBoardState }) => {
       })
       .then(response => response.json())
       .then(data => {
-        if (data.status === "success") {
-          // Overwrite the old board with the new board from Python!
+        // 2. We cleanly merged the updated logic here!
+        if (data.status === "success" || data.status === "game_over") {
           setBoardState(data.board); 
+          
+          // If Python says someone won, trigger the game over screen!
+          if (data.winner !== 0) {
+             setWinner(data.winner); 
+          }
         }
       })
       .catch(error => console.error("Move failed:", error));
@@ -64,15 +66,14 @@ const Board = ({ boardData, setBoardState }) => {
         const isDark = (row + col) % 2 !== 0;
         const pieceValue = boardData[row][col];
         
-        // Check if this specific square is the one currently selected
         const isSelected = selectedSquare && selectedSquare.row === row && selectedSquare.col === col;
 
         squares.push(
           <Square 
             key={`${row}-${col}`} 
             isDark={isDark}
-            isSelected={isSelected} // Pass the highlight status
-            onClick={() => handleSquareClick(row, col)} // Pass the click function
+            isSelected={isSelected}
+            onClick={() => handleSquareClick(row, col)}
           >
             <Piece value={pieceValue} />
           </Square>
