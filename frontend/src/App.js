@@ -1,21 +1,29 @@
-// src/App.js (Updated)
+// src/App.js
 import React, { useState, useEffect } from 'react';
 import Board from './components/Board';
 import './App.css';
 
 function App() {
-  const [serverMessage, setServerMessage] = useState('Checking server status...');
+  const [serverStatus, setServerStatus] = useState('Connecting to Python...');
+  
+  // THIS is the line that went missing! It holds the matrix.
+  const [boardState, setBoardState] = useState([]); 
 
   useEffect(() => {
-    // Keep your specific Codespace URL here!
-    const backendUrl = 'https://super-duper-giggle-wr449jvr65whg45r-5000.app.github.dev//api/status'; 
+    // Your exact Codespace URL with the start endpoint
+    const gameUrl = 'https://super-duper-giggle-wr449jvr65whg45r-5000.app.github.dev/api/game/start'; 
 
-    fetch(backendUrl)
+    fetch(gameUrl)
       .then(response => response.json())
-      .then(data => setServerMessage(data.message))
+      .then(data => {
+        if (data.status === "game_started") {
+          setBoardState(data.board); 
+          setServerStatus("Game loaded successfully!");
+        }
+      })
       .catch(error => {
         console.error("Connection error:", error);
-        setServerMessage('Failed to connect to backend.');
+        setServerStatus('Failed to fetch game data.');
       });
   }, []);
 
@@ -23,11 +31,11 @@ function App() {
     <div className="App" style={{ textAlign: 'center', padding: '20px' }}>
       <h1>RL Checkers</h1>
       <div style={{ marginBottom: '20px', color: '#555' }}>
-        <strong>Backend Status:</strong> {serverMessage}
+        <strong>Status:</strong> {serverStatus}
       </div>
       
-      {/* This renders our new 8x8 grid! */}
-      <Board /> 
+      {/* Passing the state and the updater function to the Board */}
+      <Board boardData={boardState} setBoardState={setBoardState} /> 
     </div>
   );
 }
